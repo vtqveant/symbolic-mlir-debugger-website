@@ -1,0 +1,341 @@
+name: Validate Website
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate project structure
+      run: |
+        echo "Validating project structure..."
+        
+        # Required files
+        required_files=("index.html" "architecture.svg" "Dockerfile" "nginx.conf" "README.md" "AGENTS.md")
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "ERROR: Missing required file: $file"
+            exit 1
+          fi
+          echo "PASS: $file found"
+        done
+        
+        # Required directories
+        required_dirs=("kubernetes")
+        for dir in "${required_dirs[@]}"; do
+          if [ ! -d "$dir" ]; then
+            echo "ERROR: Missing required directory: $dir"
+            exit 1
+          fi
+          echo "PASS: $dir directory found"
+        done
+        
+        # Kubernetes manifests
+        k8s_files=("deployment.yaml" "service.yaml" "ingress.yaml")
+        for file in "${k8s_files[@]}"; do
+          if [ ! -f "kubernetes/$file" ]; then
+            echo "ERROR: Missing Kubernetes manifest: kubernetes/$file"
+            exit 1
+          fi
+          echo "PASS: kubernetes/$file found"
+        done
+        
+        echo "PASS: All required files and directories found"
+    
+    - name: Validate HTML structure
+      run: |
+        echo "Validating HTML structure..."
+        
+        # Check HTML basics
+        if ! grep -q "<!DOCTYPE html>" index.html; then
+          echo "ERROR: Missing DOCTYPE declaration"
+          exit 1
+        fi
+        
+        if ! grep -q "<title>" index.html; then
+          echo "ERROR: No title tag found"
+          exit 1
+        fi
+        
+        # Check for SVG reference
+        if ! grep -q "architecture.svg" index.html; then
+          echo "ERROR: SVG file not referenced in HTML"
+          exit 1
+        fi
+        
+        # Check tag balance (basic check)
+        echo "Checking tag balance..."
+        
+        # div tags
+        open_divs=$(grep -c "<div" index.html)
+        close_divs=$(grep -c "</div>" index.html)
+        if [ $open_divs -ne $close_divs ]; then
+          echo "ERROR: Div tags unbalanced: $open_divs opening, $close_divs closing"
+          exit 1
+        fi
+        echo "PASS: Div tags balanced: $open_divs opening, $close_divs closing"
+        
+        # li tags
+        open_lis=$(grep -c "<li>" index.html)
+        close_lis=$(grep -c "</li>" index.html)
+        if [ $open_lis -ne $close_lis ]; then
+          echo "ERROR: LI tags unbalanced: $open_lis opening, $close_lis closing"
+          exit 1
+        fi
+        echo "PASS: LI tags balanced: $open_lis opening, $close_lis closing"
+        
+        # Check for common issues
+        if grep -q "<svg>.*<object" index.html; then
+          echo "ERROR: Found <svg> tag containing <object> tag (invalid HTML)"
+          exit 1
+        fi
+        
+        echo "PASS: HTML structure validation passed"
+    
+    - name: Validate emoji prohibition (AGENTS.md policy)
+      run: |
+        echo "Validating emoji prohibition in source files..."
+        
+        # Files to check for emoji
+        source_files=(
+          "index.html"
+          "architecture.svg"
+          "nginx.conf"
+          "Dockerfile"
+          "kubernetes/deployment.yaml"
+          "kubernetes/service.yaml"
+          "kubernetes/ingress.yaml"
+        )
+        
+        emoji_detected=false
+        
+        for file in "${source_files[@]}"; do
+          if [ -f "$file" ]; then
+            # Check for emoji (Unicode range for most emoji)
+            if grep -q -P "[\x{1F300}-\x{1F9FF}]" "$file"; then
+              echo "ERROR: Emoji detected in $file"
+              echo "Offending lines:"
+              grep -P "[\x{1F300}-\x{1F9FF}]" "$file" | head -3
+              emoji_detected=true
+            fi
+            
+            # Also check for common text emoji
+            if grep -q -E "(✅|❌|⚠️|🚀|📊|🔧|🎉|👍|👎)" "$file"; then
+              echo "ERROR: Text emoji detected in $file"
+              echo "Offending lines:"
+              grep -E "(✅|❌|⚠️|🚀|📊|🔧|🎉|👍|👎)" "$file" | head -3
+              emoji_detected=true
+            fi
+          fi
+        done
+        
+        if [ "$emoji_detected" = true ]; then
+          echo ""
+          echo "EMOJI PROHIBITION VIOLATION"
+          echo "==========================="
+          echo "Emoji are strictly prohibited in source code files."
+          echo ""
+          echo "Please review AGENTS.md for the emoji prohibition policy:"
+          echo "- Use professional text instead of emoji"
+          echo "- Examples: 'ERROR:' instead of '❌', 'SUCCESS:' instead of '✅'"
+          echo "- This project follows academic/research coding standards"
+          echo ""
+          echo "Allowed alternatives:"
+          echo "- Success: 'SUCCESS:', '✓', '[OK]'"
+          echo "- Error: 'ERROR:', '✗', '[FAIL]'"
+          echo "- Status: 'Processing...', 'Loading...', 'Status:'"
+          echo ""
+          exit 1
+        else
+          echo "PASS: No emoji detected in source files"
+          echo "PASS: AGENTS.md emoji prohibition policy followed"
+        fi
+    
+    - name: Validate Docker configuration
+      run: |
+        echo "Validating Docker configuration..."
+        
+        # Check Dockerfile
+        if ! grep -q "^FROM nginx" Dockerfile; then
+          echo "ERROR: Dockerfile should start with FROM nginx"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY index.html" Dockerfile; then
+          echo "ERROR: Dockerfile should copy index.html"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY architecture.svg" Dockerfile; then
+          echo "ERROR: Dockerfile should copy architecture.svg"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY nginx.conf" Dockerfile; then
+          echo "ERROR: Dockerfile should copy nginx.conf"
+          exit 1
+        fi
+        
+        if ! grep -q "EXPOSE 80" Dockerfile; then
+          echo "ERROR: Dockerfile should expose port 80"
+          exit 1
+        fi
+        
+        echo "PASS: Dockerfile validation passed"
+        
+        # Check nginx.conf
+        if ! grep -q "server {" nginx.conf; then
+          echo "ERROR: nginx.conf missing server block"
+          exit 1
+        fi
+        
+        if ! grep -q "listen 80" nginx.conf; then
+          echo "ERROR: nginx.conf missing listen directive"
+          exit 1
+        fi
+        
+        if ! grep -q "root /usr/share/nginx/html" nginx.conf; then
+          echo "ERROR: nginx.conf missing root directive"
+          exit 1
+        fi
+        
+        if ! grep -q "index index.html" nginx.conf; then
+          echo "ERROR: nginx.conf missing index directive"
+          exit 1
+        fi
+        
+        echo "PASS: nginx.conf validation passed"
+    
+    - name: Validate Kubernetes manifests
+      run: |
+        echo "Validating Kubernetes manifests..."
+        
+        # Check deployment.yaml
+        if ! grep -q "kind: Deployment" kubernetes/deployment.yaml; then
+          echo "ERROR: deployment.yaml missing kind: Deployment"
+          exit 1
+        fi
+        
+        if ! grep -q "replicas:" kubernetes/deployment.yaml; then
+          echo "ERROR: deployment.yaml missing replicas"
+          exit 1
+        fi
+        
+        if ! grep -q "harbor.niche-robotics.tech/library/mlir-debugger-website" kubernetes/deployment.yaml; then
+          echo "ERROR: deployment.yaml missing image reference"
+          exit 1
+        fi
+        
+        # Check service.yaml
+        if ! grep -q "kind: Service" kubernetes/service.yaml; then
+          echo "ERROR: service.yaml missing kind: Service"
+          exit 1
+        fi
+        
+        if ! grep -q "port: 80" kubernetes/service.yaml; then
+          echo "ERROR: service.yaml missing port 80"
+          exit 1
+        fi
+        
+        # Check ingress.yaml
+        if ! grep -q "kind: Ingress" kubernetes/ingress.yaml; then
+          echo "ERROR: ingress.yaml missing kind: Ingress"
+          exit 1
+        fi
+        
+        if ! grep -q "www.niche-robotics.tech" kubernetes/ingress.yaml; then
+          echo "ERROR: ingress.yaml missing host www.niche-robotics.tech"
+          exit 1
+        fi
+        
+        if ! grep -q "cert-manager.io/cluster-issuer" kubernetes/ingress.yaml; then
+          echo "ERROR: ingress.yaml missing cert-manager annotation"
+          exit 1
+        fi
+        
+        echo "PASS: Kubernetes manifests validation passed"
+    
+    - name: Test Docker build
+      run: |
+        echo "Testing Docker build..."
+        
+        # Test build without pushing
+        docker build -t mlir-debugger-website-test .
+        
+        echo "PASS: Docker build successful"
+        
+        # Test running the container
+        docker run -d --name test-website -p 8080:80 mlir-debugger-website-test
+        sleep 3
+        
+        # Test health endpoint
+        if curl -s http://localhost:8080/health | grep -q "healthy"; then
+          echo "PASS: Health endpoint working"
+        else
+          echo "ERROR: Health endpoint not working"
+          docker logs test-website
+          exit 1
+        fi
+        
+        # Test main page
+        if curl -s http://localhost:8080 | grep -q "MLIR Debugger"; then
+          echo "PASS: Main page serving correctly"
+        else
+          echo "ERROR: Main page not serving correctly"
+          exit 1
+        fi
+        
+        # Cleanup
+        docker stop test-website
+        docker rm test-website
+        
+        echo "PASS: Docker container test passed"
+
+  report:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Generate validation report
+      run: |
+        echo "Validation Report"
+        echo "================="
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Workflow: ${{ github.workflow }}"
+        echo "Run ID: ${{ github.run_id }}"
+        echo ""
+        
+        if [ "${{ needs.validate.result }}" = "success" ]; then
+          echo "RESULT: All validations passed successfully!"
+          echo ""
+          echo "Validated:"
+          echo "- Project structure and required files"
+          echo "- HTML structure and tag balancing"
+          echo "- Emoji prohibition policy (AGENTS.md)"
+          echo "- Docker configuration and build"
+          echo "- Kubernetes manifests"
+          echo "- Docker container functionality"
+        else
+          echo "RESULT: Validation failed"
+          echo ""
+          echo "Please check the validation job logs for details."
+          echo "Common issues:"
+          echo "- Missing required files"
+          echo "- HTML structure issues"
+          echo "- Emoji in source code (see AGENTS.md)"
+          echo "- Docker build failures"
+        fi
+        
+        echo ""
+        echo "Live website: https://www.niche-robotics.tech"
+        echo "AGENTS.md: Coding standards and emoji prohibition policy"

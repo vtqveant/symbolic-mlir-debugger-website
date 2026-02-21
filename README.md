@@ -2,11 +2,11 @@
 
 Professional landing page for the MLIR Debugger project - a dynamic symbolic debugger for AI compilers designed for agentic coding workflows and "Dark Factories".
 
-## 🚀 Live Website
+## Live Website
 
 **Access the live website at:** https://www.niche-robotics.tech
 
-## 📋 Features
+## Features
 
 - **Modern Responsive Design**: Built with clean HTML/CSS, Inter font, and responsive layouts
 - **Interactive Architecture Diagram**: SVG visualization of the MLIR Debugger system architecture
@@ -16,7 +16,7 @@ Professional landing page for the MLIR Debugger project - a dynamic symbolic deb
 - **Security Hardened**: Content-Security-Policy headers, TLS, and security best practices
 - **Performance Optimized**: Gzip compression, asset caching, HTTP/2 support
 
-## 🏗️ Architecture
+## Architecture
 
 The website showcases the MLIR Debugger's microservices architecture:
 
@@ -56,7 +56,7 @@ The website showcases the MLIR Debugger's microservices architecture:
 └─────────────────────────────────────────────────────────┘
 ```
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 - **Frontend**: HTML5, CSS3, SVG, JavaScript (vanilla)
 - **Web Server**: nginx (alpine)
@@ -67,7 +67,7 @@ The website showcases the MLIR Debugger's microservices architecture:
 - **Ingress**: Traefik
 - **DNS**: Custom domain (niche-robotics.tech)
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 symbolic-mlir-debugger-website/
@@ -76,13 +76,16 @@ symbolic-mlir-debugger-website/
 ├── nginx.conf             # nginx configuration with security headers
 ├── Dockerfile             # Container build instructions
 ├── README.md              # This file
+├── AGENTS.md              # Project guidelines & emoji prohibition policy
+├── .github/workflows/     # Validation pipeline
+│   └── validate.yml       # Validation workflow
 └── kubernetes/           # Kubernetes deployment manifests
     ├── deployment.yaml    # Kubernetes deployment
     ├── service.yaml      # Service definition
     └── ingress.yaml      # Ingress with TLS configuration
 ```
 
-## 🐳 Deployment
+## Deployment
 
 ### Local Development
 
@@ -119,8 +122,9 @@ The website is deployed to a Kubernetes cluster with the following configuration
    - Uses Let's Encrypt production issuer
    - Auto-renewal configured
 
-## 🔒 Security Features
+## Security & Coding Standards
 
+### Security Features
 - **Content Security Policy**: Restricts resources to trusted sources
 - **TLS 1.3**: Encrypted HTTPS connections
 - **Security Headers**:
@@ -134,7 +138,16 @@ The website is deployed to a Kubernetes cluster with the following configuration
   - Resource limits
   - Health checks
 
-## 📊 Performance
+### Coding Standards (AGENTS.md)
+- **Emoji Prohibition**: No emoji in source code files
+- **Professional Text**: Use descriptive text instead of emoji
+- **Validation**: GitHub Actions enforces coding standards
+- **Accessibility**: Semantic HTML, proper ARIA labels
+- **Maintainability**: Clean code structure, proper documentation
+
+See [AGENTS.md](AGENTS.md) for complete project guidelines.
+
+## Performance
 
 - **Gzip Compression**: Reduces transfer size by ~70%
 - **Asset Caching**: Static assets cached for 1 year
@@ -142,7 +155,7 @@ The website is deployed to a Kubernetes cluster with the following configuration
 - **Minimal Dependencies**: No heavy frameworks or libraries
 - **Optimized Images**: SVG for scalability
 
-## 🎯 Target Audience
+## Target Audience
 
 1. **AI Researchers**: Understanding symbolic debugging for MLIR
 2. **Compiler Engineers**: Tools for MLIR compiler development
@@ -150,26 +163,74 @@ The website is deployed to a Kubernetes cluster with the following configuration
 4. **DevOps Teams**: Kubernetes deployment patterns
 5. **Academic Community**: Research tool for formal methods
 
-## 🔄 Continuous Integration
+## Validation
 
-The website is designed for automated deployment:
+### GitHub Actions Workflow
 
-1. **GitHub Actions**: Automated testing and building
-2. **Harbor Registry**: Secure container storage
-3. **Kubernetes**: Automated rolling updates
-4. **cert-manager**: Automatic TLS certificate renewal
+The repository includes a validation workflow to ensure code quality:
 
-## 📈 Project Status
+#### **Validation Pipeline** (`.github/workflows/validate.yml`)
+- **Triggers**: On push to main/develop, pull requests, manual trigger
+- **Validates**:
+  - Project structure and required files
+  - HTML structure and tag balancing
+  - Emoji prohibition policy (AGENTS.md)
+  - Dockerfile and nginx configuration
+  - Kubernetes manifests
+  - Docker build and container test
+
+#### **Workflow Purpose**:
+- Prevent broken code from being merged
+- Enforce coding standards (AGENTS.md)
+- Ensure basic functionality works
+- Maintain code quality
+
+#### **Validation Checks**:
+1. **Project Structure**: All required files present
+2. **HTML Validation**: Proper structure, no broken tags
+3. **Emoji Prohibition**: No emoji in source code (AGENTS.md policy)
+4. **Docker Configuration**: Valid Dockerfile and nginx config
+5. **Kubernetes Manifests**: Valid deployment configuration
+6. **Docker Build**: Container builds and runs successfully
+
+### Manual Deployment
+
+For now, deployment is manual:
+
+```bash
+# Build Docker image
+docker build -t harbor.niche-robotics.tech/library/mlir-debugger-website:latest .
+
+# Push to Harbor (requires login)
+docker push harbor.niche-robotics.tech/library/mlir-debugger-website:latest
+
+# Deploy to Kubernetes
+kubectl apply -f kubernetes/ --namespace=default
+
+# Check deployment
+kubectl get pods -l app=mlir-debugger-website --namespace=default
+```
+
+### Testing Locally
+
+```bash
+# Test Docker build
+docker build -t mlir-debugger-website-test .
+docker run -p 8080:80 mlir-debugger-website-test
+# Open http://localhost:8080
+```
+
+## Project Status
 
 | Component | Status | Version |
 |-----------|--------|---------|
 | Core Library | ✅ Production Ready | v1.0.0 |
 | Symbolic Execution | ⚡ Beta Testing | v0.8.0 |
 | Kubernetes Deployment | ✅ Operational | Active |
-| AI Agent Integration | 🚧 In Development | Phase 2 |
+| AI Agent Integration | In Development | Phase 2 |
 | Website | ✅ Live | v1.0.0 |
 
-## 🤝 Contributing
+## Contributing
 
 This website is part of the larger MLIR Debugger project. For contributions:
 
@@ -178,11 +239,11 @@ This website is part of the larger MLIR Debugger project. For contributions:
 3. Make changes and test locally
 4. Submit a pull request
 
-## 📄 License
+## License
 
 Part of the MLIR Debugger project. See main repository for license details.
 
-## 📞 Contact
+## Contact
 
 - **Website**: https://www.niche-robotics.tech
 - **GitHub**: https://github.com/vtqveant/symbolic-mlir-debugger
