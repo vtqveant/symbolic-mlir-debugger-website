@@ -76,6 +76,10 @@ symbolic-mlir-debugger-website/
 ├── nginx.conf             # nginx configuration with security headers
 ├── Dockerfile             # Container build instructions
 ├── README.md              # This file
+├── AGENTS.md              # Project guidelines & emoji prohibition policy
+├── .github/workflows/     # CI/CD pipelines
+│   ├── validate.yml       # Validation workflow
+│   └── ci.yml            # Full deployment workflow
 └── kubernetes/           # Kubernetes deployment manifests
     ├── deployment.yaml    # Kubernetes deployment
     ├── service.yaml      # Service definition
@@ -119,8 +123,9 @@ The website is deployed to a Kubernetes cluster with the following configuration
    - Uses Let's Encrypt production issuer
    - Auto-renewal configured
 
-## 🔒 Security Features
+## 🔒 Security & Coding Standards
 
+### Security Features
 - **Content Security Policy**: Restricts resources to trusted sources
 - **TLS 1.3**: Encrypted HTTPS connections
 - **Security Headers**:
@@ -133,6 +138,15 @@ The website is deployed to a Kubernetes cluster with the following configuration
   - Non-root user execution
   - Resource limits
   - Health checks
+
+### Coding Standards (AGENTS.md)
+- **Emoji Prohibition**: No emoji in source code files
+- **Professional Text**: Use descriptive text instead of emoji
+- **Validation**: GitHub Actions enforces coding standards
+- **Accessibility**: Semantic HTML, proper ARIA labels
+- **Maintainability**: Clean code structure, proper documentation
+
+See [AGENTS.md](AGENTS.md) for complete project guidelines.
 
 ## 📊 Performance
 
