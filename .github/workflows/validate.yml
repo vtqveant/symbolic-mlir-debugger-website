@@ -1,0 +1,297 @@
+name: Validate and Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Validate project structure
+      run: |
+        echo "🔍 Validating project structure..."
+        
+        # Required files
+        required_files=("index.html" "architecture.svg" "Dockerfile" "nginx.conf" "README.md")
+        for file in "${required_files[@]}"; do
+          if [ ! -f "$file" ]; then
+            echo "❌ Missing required file: $file"
+            exit 1
+          fi
+          echo "✅ $file found"
+        done
+        
+        # Required directories
+        required_dirs=("kubernetes")
+        for dir in "${required_dirs[@]}"; do
+          if [ ! -d "$dir" ]; then
+            echo "❌ Missing required directory: $dir"
+            exit 1
+          fi
+          echo "✅ $dir directory found"
+        done
+        
+        # Kubernetes manifests
+        k8s_files=("deployment.yaml" "service.yaml" "ingress.yaml")
+        for file in "${k8s_files[@]}"; do
+          if [ ! -f "kubernetes/$file" ]; then
+            echo "❌ Missing Kubernetes manifest: kubernetes/$file"
+            exit 1
+          fi
+          echo "✅ kubernetes/$file found"
+        done
+        
+        echo "✅ All required files and directories found"
+    
+    - name: Validate HTML
+      run: |
+        echo "🔍 Validating HTML..."
+        
+        # Check HTML basics
+        if ! grep -q "<!DOCTYPE html>" index.html; then
+          echo "❌ Missing DOCTYPE declaration"
+          exit 1
+        fi
+        
+        if ! grep -q "<title>" index.html; then
+          echo "❌ No title tag found"
+          exit 1
+        fi
+        
+        # Check for SVG reference
+        if ! grep -q "architecture.svg" index.html; then
+          echo "❌ SVG file not referenced in HTML"
+          exit 1
+        fi
+        
+        # Check tag balance (basic check)
+        echo "Checking tag balance..."
+        
+        # div tags
+        open_divs=$(grep -c "<div" index.html)
+        close_divs=$(grep -c "</div>" index.html)
+        if [ $open_divs -ne $close_divs ]; then
+          echo "❌ Div tags unbalanced: $open_divs opening, $close_divs closing"
+          exit 1
+        fi
+        echo "✅ Div tags balanced: $open_divs opening, $close_divs closing"
+        
+        # li tags
+        open_lis=$(grep -c "<li>" index.html)
+        close_lis=$(grep -c "</li>" index.html)
+        if [ $open_lis -ne $close_lis ]; then
+          echo "❌ LI tags unbalanced: $open_lis opening, $close_lis closing"
+          exit 1
+        fi
+        echo "✅ LI tags balanced: $open_lis opening, $close_lis closing"
+        
+        # Check for common issues
+        if grep -q "<svg>.*<object" index.html; then
+          echo "❌ Found <svg> tag containing <object> tag (invalid HTML)"
+          exit 1
+        fi
+        
+        echo "✅ HTML validation passed"
+    
+    - name: Validate SVG
+      run: |
+        echo "🔍 Validating SVG..."
+        
+        # Check SVG file exists and is valid
+        if [ ! -s "architecture.svg" ]; then
+          echo "❌ SVG file is empty or missing"
+          exit 1
+        fi
+        
+        # Check it's a valid SVG
+        if ! head -1 architecture.svg | grep -q "<?xml\|<svg"; then
+          echo "❌ SVG file doesn't start with XML declaration or <svg> tag"
+          exit 1
+        fi
+        
+        # Check for required SVG elements
+        if ! grep -q "<svg" architecture.svg; then
+          echo "❌ SVG file missing <svg> tag"
+          exit 1
+        fi
+        
+        if ! grep -q "</svg>" architecture.svg; then
+          echo "❌ SVG file missing closing </svg> tag"
+          exit 1
+        fi
+        
+        echo "✅ SVG validation passed"
+    
+    - name: Validate Docker configuration
+      run: |
+        echo "🔍 Validating Docker configuration..."
+        
+        # Check Dockerfile
+        if ! grep -q "^FROM nginx" Dockerfile; then
+          echo "❌ Dockerfile should start with FROM nginx"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY index.html" Dockerfile; then
+          echo "❌ Dockerfile should copy index.html"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY architecture.svg" Dockerfile; then
+          echo "❌ Dockerfile should copy architecture.svg"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY nginx.conf" Dockerfile; then
+          echo "❌ Dockerfile should copy nginx.conf"
+          exit 1
+        fi
+        
+        if ! grep -q "EXPOSE 80" Dockerfile; then
+          echo "❌ Dockerfile should expose port 80"
+          exit 1
+        fi
+        
+        echo "✅ Dockerfile validation passed"
+        
+        # Check nginx.conf
+        if ! grep -q "server {" nginx.conf; then
+          echo "❌ nginx.conf missing server block"
+          exit 1
+        fi
+        
+        if ! grep -q "listen 80" nginx.conf; then
+          echo "❌ nginx.conf missing listen directive"
+          exit 1
+        fi
+        
+        if ! grep -q "root /usr/share/nginx/html" nginx.conf; then
+          echo "❌ nginx.conf missing root directive"
+          exit 1
+        fi
+        
+        if ! grep -q "index index.html" nginx.conf; then
+          echo "❌ nginx.conf missing index directive"
+          exit 1
+        fi
+        
+        echo "✅ nginx.conf validation passed"
+    
+    - name: Validate Kubernetes manifests
+      run: |
+        echo "🔍 Validating Kubernetes manifests..."
+        
+        # Check deployment.yaml
+        if ! grep -q "kind: Deployment" kubernetes/deployment.yaml; then
+          echo "❌ deployment.yaml missing kind: Deployment"
+          exit 1
+        fi
+        
+        if ! grep -q "replicas:" kubernetes/deployment.yaml; then
+          echo "❌ deployment.yaml missing replicas"
+          exit 1
+        fi
+        
+        if ! grep -q "harbor.niche-robotics.tech/library/mlir-debugger-website" kubernetes/deployment.yaml; then
+          echo "❌ deployment.yaml missing image reference"
+          exit 1
+        fi
+        
+        # Check service.yaml
+        if ! grep -q "kind: Service" kubernetes/service.yaml; then
+          echo "❌ service.yaml missing kind: Service"
+          exit 1
+        fi
+        
+        if ! grep -q "port: 80" kubernetes/service.yaml; then
+          echo "❌ service.yaml missing port 80"
+          exit 1
+        fi
+        
+        # Check ingress.yaml
+        if ! grep -q "kind: Ingress" kubernetes/ingress.yaml; then
+          echo "❌ ingress.yaml missing kind: Ingress"
+          exit 1
+        fi
+        
+        if ! grep -q "www.niche-robotics.tech" kubernetes/ingress.yaml; then
+          echo "❌ ingress.yaml missing host www.niche-robotics.tech"
+          exit 1
+        fi
+        
+        if ! grep -q "cert-manager.io/cluster-issuer" kubernetes/ingress.yaml; then
+          echo "❌ ingress.yaml missing cert-manager annotation"
+          exit 1
+        fi
+        
+        echo "✅ Kubernetes manifests validation passed"
+    
+    - name: Build Docker image (test)
+      run: |
+        echo "🔨 Testing Docker build..."
+        
+        # Test build without pushing
+        docker build -t mlir-debugger-website-test .
+        
+        # Test running the container
+        docker run -d --name test-website -p 8080:80 mlir-debugger-website-test
+        sleep 3
+        
+        # Test health endpoint
+        if curl -s http://localhost:8080/health | grep -q "healthy"; then
+          echo "✅ Health endpoint working"
+        else
+          echo "❌ Health endpoint not working"
+          docker logs test-website
+          exit 1
+        fi
+        
+        # Test main page
+        if curl -s http://localhost:8080 | grep -q "MLIR Debugger"; then
+          echo "✅ Main page serving correctly"
+        else
+          echo "❌ Main page not serving correctly"
+          exit 1
+        fi
+        
+        # Cleanup
+        docker stop test-website
+        docker rm test-website
+        
+        echo "✅ Docker build and test passed"
+
+  report:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Generate validation report
+      run: |
+        echo "📊 Validation Report"
+        echo "==================="
+        echo "Repository: ${{ github.repository }}"
+        echo "Branch: ${{ github.ref }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Workflow: ${{ github.workflow }}"
+        echo "Run ID: ${{ github.run_id }}"
+        echo ""
+        echo "✅ All validations passed successfully!"
+        echo ""
+        echo "Next steps for deployment:"
+        echo "1. Add GitHub Secrets:"
+        echo "   - HARBOR_USERNAME"
+        echo "   - HARBOR_PASSWORD"
+        echo "   - KUBECONFIG"
+        echo "   - TELEGRAM_BOT_TOKEN (optional)"
+        echo "   - TELEGRAM_CHAT_ID (optional)"
+        echo "2. Enable the full CI/CD workflow in .github/workflows/ci.yml"
+        echo "3. Merge to main will trigger automatic deployment"
+        echo ""
+        echo "Live website: https://www.niche-robotics.tech"

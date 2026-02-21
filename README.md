@@ -150,14 +150,87 @@ The website is deployed to a Kubernetes cluster with the following configuration
 4. **DevOps Teams**: Kubernetes deployment patterns
 5. **Academic Community**: Research tool for formal methods
 
-## 🔄 Continuous Integration
+## 🔄 Continuous Integration & Deployment
 
-The website is designed for automated deployment:
+### GitHub Actions Workflows
 
-1. **GitHub Actions**: Automated testing and building
-2. **Harbor Registry**: Secure container storage
-3. **Kubernetes**: Automated rolling updates
-4. **cert-manager**: Automatic TLS certificate renewal
+The repository includes automated CI/CD pipelines:
+
+#### 1. **Validation Pipeline** (`.github/workflows/validate.yml`)
+- **Triggers**: On push to main/develop, pull requests, manual trigger
+- **Validates**:
+  - Project structure and required files
+  - HTML structure and tag balancing
+  - SVG file validity
+  - Dockerfile and nginx configuration
+  - Kubernetes manifests
+  - Docker build and container test
+
+#### 2. **Full CI/CD Pipeline** (`.github/workflows/ci.yml` - requires secrets)
+- **Triggers**: On push to main branch
+- **Automatically**:
+  - Builds Docker image
+  - Pushes to Harbor registry
+  - Deploys to Kubernetes cluster
+  - Sends Telegram notifications
+
+### Setup for Automatic Deployment
+
+To enable automatic deployment when PRs are merged to main:
+
+1. **Add GitHub Secrets**:
+   ```bash
+   # Harbor credentials
+   HARBOR_USERNAME="robot$library+automation"
+   HARBOR_PASSWORD="your-harbor-password"
+   
+   # Kubernetes configuration
+   KUBECONFIG="base64-encoded-kubeconfig"
+   
+   # Telegram notifications (optional)
+   TELEGRAM_BOT_TOKEN="your-bot-token"
+   TELEGRAM_CHAT_ID="your-chat-id"
+   ```
+
+2. **Workflow Behavior**:
+   - **Pull Requests**: Run validation only
+   - **Merge to Main**: Run validation → build → deploy
+   - **Manual Trigger**: Available via GitHub UI
+
+3. **Deployment Process**:
+   ```mermaid
+   graph LR
+     A[PR Opened] --> B[Validation]
+     B --> C{Validation Passed?}
+     C -->|Yes| D[Ready for Review]
+     C -->|No| E[Fix Issues]
+     D --> F[Merge to Main]
+     F --> G[Build Docker Image]
+     G --> H[Push to Harbor]
+     H --> I[Deploy to Kubernetes]
+     I --> J[Verify Deployment]
+     J --> K[Send Notification]
+   ```
+
+### Current Deployment Status
+
+- ✅ **Validation**: Automated on all PRs
+- ⚙️ **Auto-deployment**: Requires secret configuration
+- ✅ **Manual deployment**: `kubectl apply -f kubernetes/`
+- ✅ **TLS**: Automatic via cert-manager
+- ✅ **Health checks**: Built into deployment
+
+### Testing Locally
+
+```bash
+# Run validation checks
+./scripts/validate.sh  # (to be created)
+
+# Test Docker build
+docker build -t mlir-debugger-website-test .
+docker run -p 8080:80 mlir-debugger-website-test
+# Open http://localhost:8080
+```
 
 ## 📈 Project Status
 
