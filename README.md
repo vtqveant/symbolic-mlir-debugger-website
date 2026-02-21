@@ -77,9 +77,8 @@ symbolic-mlir-debugger-website/
 ├── Dockerfile             # Container build instructions
 ├── README.md              # This file
 ├── AGENTS.md              # Project guidelines & emoji prohibition policy
-├── .github/workflows/     # CI/CD pipelines
-│   ├── validate.yml       # Validation workflow
-│   └── ci.yml            # Full deployment workflow
+├── .github/workflows/     # Validation pipeline
+│   └── validate.yml       # Validation workflow
 └── kubernetes/           # Kubernetes deployment manifests
     ├── deployment.yaml    # Kubernetes deployment
     ├── service.yaml      # Service definition
@@ -164,82 +163,57 @@ See [AGENTS.md](AGENTS.md) for complete project guidelines.
 4. **DevOps Teams**: Kubernetes deployment patterns
 5. **Academic Community**: Research tool for formal methods
 
-## 🔄 Continuous Integration & Deployment
+## 🔍 Validation
 
-### GitHub Actions Workflows
+### GitHub Actions Workflow
 
-The repository includes automated CI/CD pipelines:
+The repository includes a validation workflow to ensure code quality:
 
-#### 1. **Validation Pipeline** (`.github/workflows/validate.yml`)
+#### **Validation Pipeline** (`.github/workflows/validate.yml`)
 - **Triggers**: On push to main/develop, pull requests, manual trigger
 - **Validates**:
   - Project structure and required files
   - HTML structure and tag balancing
-  - SVG file validity
+  - Emoji prohibition policy (AGENTS.md)
   - Dockerfile and nginx configuration
   - Kubernetes manifests
   - Docker build and container test
 
-#### 2. **Full CI/CD Pipeline** (`.github/workflows/ci.yml` - requires secrets)
-- **Triggers**: On push to main branch
-- **Automatically**:
-  - Builds Docker image
-  - Pushes to Harbor registry
-  - Deploys to Kubernetes cluster
-  - Sends Telegram notifications
+#### **Workflow Purpose**:
+- Prevent broken code from being merged
+- Enforce coding standards (AGENTS.md)
+- Ensure basic functionality works
+- Maintain code quality
 
-### Setup for Automatic Deployment
+#### **Validation Checks**:
+1. **Project Structure**: All required files present
+2. **HTML Validation**: Proper structure, no broken tags
+3. **Emoji Prohibition**: No emoji in source code (AGENTS.md policy)
+4. **Docker Configuration**: Valid Dockerfile and nginx config
+5. **Kubernetes Manifests**: Valid deployment configuration
+6. **Docker Build**: Container builds and runs successfully
 
-To enable automatic deployment when PRs are merged to main:
+### Manual Deployment
 
-1. **Add GitHub Secrets**:
-   ```bash
-   # Harbor credentials
-   HARBOR_USERNAME="robot$library+automation"
-   HARBOR_PASSWORD="your-harbor-password"
-   
-   # Kubernetes configuration
-   KUBECONFIG="base64-encoded-kubeconfig"
-   
-   # Telegram notifications (optional)
-   TELEGRAM_BOT_TOKEN="your-bot-token"
-   TELEGRAM_CHAT_ID="your-chat-id"
-   ```
+For now, deployment is manual:
 
-2. **Workflow Behavior**:
-   - **Pull Requests**: Run validation only
-   - **Merge to Main**: Run validation → build → deploy
-   - **Manual Trigger**: Available via GitHub UI
+```bash
+# Build Docker image
+docker build -t harbor.niche-robotics.tech/library/mlir-debugger-website:latest .
 
-3. **Deployment Process**:
-   ```mermaid
-   graph LR
-     A[PR Opened] --> B[Validation]
-     B --> C{Validation Passed?}
-     C -->|Yes| D[Ready for Review]
-     C -->|No| E[Fix Issues]
-     D --> F[Merge to Main]
-     F --> G[Build Docker Image]
-     G --> H[Push to Harbor]
-     H --> I[Deploy to Kubernetes]
-     I --> J[Verify Deployment]
-     J --> K[Send Notification]
-   ```
+# Push to Harbor (requires login)
+docker push harbor.niche-robotics.tech/library/mlir-debugger-website:latest
 
-### Current Deployment Status
+# Deploy to Kubernetes
+kubectl apply -f kubernetes/ --namespace=default
 
-- ✅ **Validation**: Automated on all PRs
-- ⚙️ **Auto-deployment**: Requires secret configuration
-- ✅ **Manual deployment**: `kubectl apply -f kubernetes/`
-- ✅ **TLS**: Automatic via cert-manager
-- ✅ **Health checks**: Built into deployment
+# Check deployment
+kubectl get pods -l app=mlir-debugger-website --namespace=default
+```
 
 ### Testing Locally
 
 ```bash
-# Run validation checks
-./scripts/validate.sh  # (to be created)
-
 # Test Docker build
 docker build -t mlir-debugger-website-test .
 docker run -p 8080:80 mlir-debugger-website-test
