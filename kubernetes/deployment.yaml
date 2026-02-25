@@ -18,10 +18,10 @@ spec:
         component: frontend
     spec:
       imagePullSecrets:
-      - name: harbor-registry-secret
+      - name: harbor-robot-secret
       containers:
       - name: website
-        image: harbor.eventflow.ru/library/symbolic-mlir-debugger-website:latest
+        image: harbor.eventflow.ru/library/symbolic-mlir-debugger-website:issue-4-refactor
         ports:
         - containerPort: 80
           name: http

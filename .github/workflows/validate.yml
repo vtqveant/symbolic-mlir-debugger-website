@@ -18,7 +18,7 @@ jobs:
         echo "Validating project structure..."
         
         # Required files
-        required_files=("index.html" "architecture.svg" "Dockerfile" "nginx.conf" "README.md" "AGENTS.md")
+        required_files=("index.html" "Dockerfile" "nginx.conf" "README.md" "AGENTS.md" "styles.css")
         for file in "${required_files[@]}"; do
           if [ ! -f "$file" ]; then
             echo "ERROR: Missing required file: $file"
@@ -64,9 +64,9 @@ jobs:
           exit 1
         fi
         
-        # Check for SVG reference
-        if ! grep -q "architecture.svg" index.html; then
-          echo "ERROR: SVG file not referenced in HTML"
+        # Check for CSS reference (refactored website uses external CSS)
+        if ! grep -q "styles.css" index.html; then
+          echo "ERROR: CSS file not referenced in HTML"
           exit 1
         fi
         
@@ -106,7 +106,9 @@ jobs:
         # Files to check for emoji
         source_files=(
           "index.html"
-          "architecture.svg"
+          "agents-dark-factories.html"
+          "mlir-debugger.html"
+          "styles.css"
           "nginx.conf"
           "Dockerfile"
           "kubernetes/deployment.yaml"
@@ -173,8 +175,18 @@ jobs:
           exit 1
         fi
         
-        if ! grep -q "COPY architecture.svg" Dockerfile; then
-          echo "ERROR: Dockerfile should copy architecture.svg"
+        if ! grep -q "COPY styles.css" Dockerfile; then
+          echo "ERROR: Dockerfile should copy styles.css"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY agents-dark-factories.html" Dockerfile; then
+          echo "ERROR: Dockerfile should copy agents-dark-factories.html"
+          exit 1
+        fi
+        
+        if ! grep -q "COPY mlir-debugger.html" Dockerfile; then
+          echo "ERROR: Dockerfile should copy mlir-debugger.html"
           exit 1
         fi
         
@@ -228,7 +240,7 @@ jobs:
           exit 1
         fi
         
-        if ! grep -q "harbor.niche-robotics.tech/library/mlir-debugger-website" kubernetes/deployment.yaml; then
+        if ! grep -q "harbor.eventflow.ru/library/symbolic-mlir-debugger-website" kubernetes/deployment.yaml; then
           echo "ERROR: deployment.yaml missing image reference"
           exit 1
         fi
@@ -250,8 +262,8 @@ jobs:
           exit 1
         fi
         
-        if ! grep -q "www.niche-robotics.tech" kubernetes/ingress.yaml; then
-          echo "ERROR: ingress.yaml missing host www.niche-robotics.tech"
+        if ! grep -q "www.eventflow.ru" kubernetes/ingress.yaml; then
+          echo "ERROR: ingress.yaml missing host www.eventflow.ru"
           exit 1
         fi
         
@@ -285,7 +297,7 @@ jobs:
         fi
         
         # Test main page
-        if curl -s http://localhost:8080 | grep -q "MLIR Debugger"; then
+        if curl -s http://localhost:8080 | grep -q "EventFlow"; then
           echo "PASS: Main page serving correctly"
         else
           echo "ERROR: Main page not serving correctly"
@@ -337,5 +349,5 @@ jobs:
         fi
         
         echo ""
-        echo "Live website: https://www.niche-robotics.tech"
+        echo "Live website: https://www.eventflow.ru"
         echo "AGENTS.md: Coding standards and emoji prohibition policy"
