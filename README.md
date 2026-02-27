@@ -104,3 +104,45 @@ open index.html
 ## License
 
 Proprietary research project.
+
+
+## 📊 Repository Status (Last Updated: 2026-02-27)
+
+### 📈 Current Metrics
+- **Total Files**: 11
+- **MLIR Files**: 0
+- **Python Files**: 0
+- **Build System**: unknown
+- **CI/CD**: has 1 workflow(s)
+
+### 🔑 Key Features
+- Dynamic symbolic (concolic) debugger
+- MLIR syntax validation
+- MCP server integration
+- Web interface available
+
+### 📝 Recent Activity
+- `b382d995` Merge pull request #9 from vtqveant/issue-8-modifications (Fri Feb 27)
+- `e8a6b80b` Implement modifications for issue #8 (Wed Feb 25)
+- `cf476f42` Merge pull request #7 from vtqveant/issue-6-fix-validation (Wed Feb 25)
+- `87708c75` Fix validation for issue #6 (Wed Feb 25)
+- `834849b6` Merge pull request #5 from vtqveant/issue-4-refactor-website (Wed Feb 25)
+
+### 🚀 Quick Start
+```bash
+# Clone the repository
+git clone https://github.com/vtqveant/symbolic-mlir-debugger-website.git
+cd symbolic-mlir-debugger-website
+
+# Deploy with Docker
+docker build -t mlir-debugger-website .
+docker run -p 8080:80 mlir-debugger-website
+
+# Or deploy to Kubernetes
+kubectl apply -f kubernetes/
+```
+
+---
+
+*This status section is automatically updated every 12 hours by the README maintenance bot.*
+*Last bot run: 2026-02-27 22:05:09 UTC*
