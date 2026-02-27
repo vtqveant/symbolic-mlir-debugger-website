@@ -21,7 +21,7 @@ spec:
       - name: harbor-robot-secret
       containers:
       - name: website
-        image: harbor.eventflow.ru/library/symbolic-mlir-debugger-website:issue-4-refactor
+        image: harbor.eventflow.ru/library/symbolic-mlir-debugger-website:issue-10-review-strongdm-projects
         ports:
         - containerPort: 80
           name: http

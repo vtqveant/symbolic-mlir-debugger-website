@@ -141,6 +141,31 @@ section {
     margin-bottom: 0.5rem;
 }
 
+/* Callout Box */
+.callout {
+    background: linear-gradient(135deg, #f0f7ff 0%, #e6f0ff 100%);
+    border-left: 4px solid var(--primary);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+}
+
+.callout h4 {
+    color: var(--primary);
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+}
+
+.callout p {
+    color: var(--dark);
+    margin-bottom: 0.75rem;
+}
+
+.callout p:last-child {
+    margin-bottom: 0;
+}
+
 /* Buttons */
 .button {
     display: inline-block;
